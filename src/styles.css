@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.btn {
+    @apply bg-blue-500;
+    @apply py-2;
+    @apply px-4;
+    @apply text-gray-100;
+    @apply rounded;
+}
+
+.btn:hover {
+    transition: .5s;
+    @apply bg-blue-700;
+}
+
