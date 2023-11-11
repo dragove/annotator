@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+    padding: 32px;
+}
+
 .btn {
     @apply bg-blue-500;
     @apply py-2;

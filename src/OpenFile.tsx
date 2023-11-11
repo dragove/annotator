@@ -1,35 +1,55 @@
-import { createSignal } from "solid-js";
+import { JSX, createSignal } from "solid-js"
 import { open } from "@tauri-apps/api/dialog"
-import { readTextFile } from '@tauri-apps/api/fs'
+import { readTextFile, writeTextFile } from '@tauri-apps/api/fs'
 
-function OpenFile() {
+type OpenFileProps = {
+    callback: (contents: string) => void
+    saveDataProvider: () => string
+}
 
-    const [path, setPath] = createSignal('wait')
-    const loadJson = async () => {
-        const contents = await readTextFile(path())
-    }
-    const choosePath = async () => {
+export default function OpenFile(props: OpenFileProps): JSX.Element {
+    const pathPlaceHolder = "please select a file"
+    const [path, setPath] = createSignal(pathPlaceHolder)
+    const [autoSave, setAutoSave] = createSignal(false)
+    const selectFile = async () => {
         const result = await open()
         if (result !== null) {
-            if (typeof result === 'string') {
-                setPath(result)
-            } else {
-                setPath(result[0])
-            }
+            const p = typeof result === "string" ? result : result[0]
+            setPath(p)
+            setAutoSave(false)
+            const contents = await readTextFile(p)
+            props.callback(contents)
         }
     }
+    setInterval(async () => {
+        if (autoSave()) {
+            const res = props.saveDataProvider()
+            await writeTextFile(path(), res)
+        }
+    }, 10000)
     return (
-        <div class="container">
-            <div class="inline-flex text-center">
-                <button onClick={choosePath} tabindex="-1">选择文件</button>
-                <p class="text-sky-600 text-lg">当前选择文件：{path()}</p>
-                <button tabindex="-1" onClick={loadJson}>加载文件</button>
+        <div>
+            <div class="flex justify-between">
+                <p>{path()}</p>
+                <div class="flex items-center mb-4">
+                    <input type="checkbox"
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                        disabled={path() === pathPlaceHolder}
+                        checked={autoSave()}
+                        onChange={(e) => setAutoSave(e.target.checked)} />
+                    <label>
+                    autoSave
+                    </label>
+                </div>
+                <div>
+                    <button class="btn" onClick={selectFile} tabindex="-1">select file</button>
+                    <button class="btn" onClick={async () =>
+                        await writeTextFile(path(), props.saveDataProvider())} tabindex="-1">save file</button>
+                </div>
             </div>
-
             <hr class="mt-2 mb-2" />
         </div>
-    );
+    )
 
 }
 
-export default OpenFile;
